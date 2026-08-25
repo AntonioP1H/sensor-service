@@ -1,0 +1,17 @@
+.vs/
+.vs
+*.slnx
+build/
+out/
+bin/
+obj/
+*.o
+*.obj
+*.exe
+*.pdb
+*.out
+CMakeCache.txt
+CMakeFiles/
+Makefile
+.env
+.env.local
