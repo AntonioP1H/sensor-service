@@ -1,24 +1,17 @@
-&#x20;# Sensor Service
+ # Sensor Service
 
+High-performance C++ service for ingesting and querying sensor data.
 
+## Features
 
-&#x20; High-performance C++ service for ingesting and querying sensor data.
+- RESTful API for sensor data submission and retrieval
 
+- PostgreSQL backend for persistent storage
 
+- Layered architecture for maintainability
 
-&#x20; ## Features
+- Comprehensive test suite
 
-&#x20; - RESTful API for sensor data submission and retrieval
+## Build & Run
 
-&#x20; - PostgreSQL backend for persistent storage
-
-&#x20; - Layered architecture for maintainability
-
-&#x20; - Comprehensive test suite
-
-
-
-&#x20; ## Build \& Run
-
-&#x20; See \[BUILD.md](BUILD.md) for detailed instructions.
-
+See [BUILD.md](BUILD.md) for detailed instructions.
