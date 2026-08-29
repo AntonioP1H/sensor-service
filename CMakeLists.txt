@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(MSVC)
+    add_compile_options(/Zc:__cplusplus)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+endif()
+
 find_package(libpqxx CONFIG REQUIRED)
 find_package(Crow CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
@@ -20,7 +25,6 @@ set(SOURCES
 # Application Executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE src/)
-
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         libpqxx::pqxx
