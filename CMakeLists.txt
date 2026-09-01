@@ -14,22 +14,16 @@ find_package(libpqxx CONFIG REQUIRED)
 find_package(Crow CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 
-# Source files
-set(SOURCES
-    src/main.cpp
+add_library(sensor_core STATIC
     src/controllers/sensor_controller.cpp
     src/services/sensor_service.cpp
     src/repositories/sensor_repository.cpp
 )
+target_include_directories(sensor_core PUBLIC src/)
+target_link_libraries(sensor_core PUBLIC libpqxx::pqxx Crow::Crow)
 
-# Application Executable
-add_executable(${PROJECT_NAME} ${SOURCES})
-target_include_directories(${PROJECT_NAME} PRIVATE src/)
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-        libpqxx::pqxx
-        Crow::Crow
-)
+add_executable(${PROJECT_NAME} src/main.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE sensor_core)
 
 enable_testing()
 add_subdirectory(tests)
