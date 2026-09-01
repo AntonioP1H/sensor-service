@@ -1,15 +1,26 @@
 #pragma once
 #include <string>
+#include <ostream>
 
 namespace sensor_service {
     namespace models {
         struct SensorData {
-            int id;                         // Database-generated primary key
-            std::string sensor_id;          // Unique sensor identifier
-            std::string timestamp;          // ISO 8601 timestamp
-            double value;                   // Sensor reading value
-            std::string unit;               // Measurement unit (e.g., "Celsius", "V");
-        };
+            int id;
+            std::string sensor_id;
+            std::string timestamp;
+            double value;
+            std::string unit;
 
+            bool operator==(const SensorData& other) const {
+                return id == other.id && sensor_id == other.sensor_id &&
+                    timestamp == other.timestamp && value == other.value && unit == other.unit;
+            }
+
+            friend std::ostream& operator<<(std::ostream& os, const SensorData& obj) {
+                return os << "{ id: " << obj.id << ", sensor_id: " << obj.sensor_id
+                    << ", timestamp: " << obj.timestamp << ", value: " << obj.value
+                    << ", unit: " << obj.unit << " }";
+            }
+        };
     }
 }
