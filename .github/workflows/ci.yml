@@ -1,0 +1,88 @@
+name: CI
+
+  on:
+    push:
+      branches: [ main ]
+    pull_request:
+      branches: [ main ]
+
+  jobs:
+    build-and-test:
+      runs-on: ubuntu-latest
+      services:
+        postgres:
+          image: postgres:14
+          env:
+            POSTGRES_DB: sensors
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_HOST_AUTH_METHOD: trust
+          ports: [5432:5432]
+          options: >-
+            --health-cmd="pg_isready -U postgres"
+            --health-interval=10s
+            --health-timeout=5s
+            --health-retries=5
+
+      env:
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        POSTGRES_DB: sensors
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        BUILD_TYPE: Release
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Install dependencies
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y \
+              build-essential \
+              cmake \
+              git \
+              libpqxx-dev \
+              libgtest-dev \
+              postgresql-client \
+              wget
+
+        - name: Build and install Crow (from source)
+          run: |
+            git clone https://github.com/ipkn/crow.git
+            cd crow
+            mkdir build && cd build
+            cmake ..
+            make
+            sudo make install
+
+        - name: Configure CMake
+          run: |
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+        - name: Build
+          run: |
+            cmake --build build --config ${{ env.BUILD_TYPE }} -- -j$(nproc)
+
+        - name: Run unit tests
+          env:
+            POSTGRES_HOST: localhost
+            POSTGRES_PORT: 5432
+            POSTGRES_DB: sensors
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+          run: |
+            cd build
+            ctest --output-on-failure -R UnitTest
+
+        - name: Run integration tests
+          env:
+            POSTGRES_HOST: localhost
+            POSTGRES_PORT: 5432
+            POSTGRES_DB: sensors
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+          run: |
+            cd build
+            ctest --output-on-failure -R IntegrationTest
