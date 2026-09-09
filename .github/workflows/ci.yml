@@ -80,7 +80,9 @@ jobs:
 
       - name: Initialize Database Schema
         run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE sensors_test;"
           PGPASSWORD=postgres psql -h localhost -U postgres -d sensors -f schema.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d sensors_test -f schema.sql
 
       - name: Configure CMake
         run: |
