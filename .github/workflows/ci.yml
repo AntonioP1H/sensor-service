@@ -53,7 +53,7 @@ jobs:
 
       - name: Build and install libpqxx
         run: |
-          git clone --depth 1 --branch 7.9.0 https://github.com/jtv/libpqxx.git
+          git clone --depth 1 https://github.com/jtv/libpqxx.git
           cd libpqxx
           mkdir build && cd build
           cmake .. -DBUILD_DOC=OFF -Dpqxx_BUILD_TEST=OFF
