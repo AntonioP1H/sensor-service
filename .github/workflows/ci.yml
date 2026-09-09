@@ -51,6 +51,14 @@ jobs:
             wget \
             libasio-dev
 
+      - name: Build and install GoogleTest & GoogleMock
+        run: |
+          cd /usr/src/googletest
+          sudo mkdir build && cd build
+          sudo cmake ..
+          sudo make
+          sudo make install
+
       - name: Build and install libpqxx
         run: |
           git clone --depth 1 https://github.com/jtv/libpqxx.git
