@@ -3,7 +3,11 @@ add_executable(unit_tests
     unit/test_main.cpp
 )
 
-target_include_directories(unit_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(unit_tests
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+)
+
 target_link_libraries(unit_tests
     PRIVATE
         sensor_core
@@ -11,16 +15,16 @@ target_link_libraries(unit_tests
         GTest::gmock
 )
 
-include(GoogleTest)
-gtest_discover_tests(unit_tests)
-
-
 add_executable(integration_tests
     integration/test_sensor_repository.cpp
     unit/test_main.cpp
 )
 
-target_include_directories(integration_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(integration_tests
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+)
+
 target_link_libraries(integration_tests
     PRIVATE
         sensor_core
@@ -28,4 +32,16 @@ target_link_libraries(integration_tests
         GTest::gmock
 )
 
-gtest_discover_tests(integration_tests)
+include(GoogleTest)
+
+gtest_discover_tests(
+    unit_tests
+    PROPERTIES
+        LABELS "unit"
+)
+
+gtest_discover_tests(
+    integration_tests
+    PROPERTIES
+        LABELS "integration"
+)

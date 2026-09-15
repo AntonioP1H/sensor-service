@@ -1,88 +1,143 @@
 name: CI
 
-  on:
-    push:
-      branches: [ main ]
-    pull_request:
-      branches: [ main ]
+on:
+  push:
+    branches:
+      - main
 
-  jobs:
-    build-and-test:
-      runs-on: ubuntu-latest
-      services:
-        postgres:
-          image: postgres:14
-          env:
-            POSTGRES_DB: sensors
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-            POSTGRES_HOST_AUTH_METHOD: trust
-          ports: [5432:5432]
-          options: >-
-            --health-cmd="pg_isready -U postgres"
-            --health-interval=10s
-            --health-timeout=5s
-            --health-retries=5
+  pull_request:
+    branches:
+      - main
 
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: sensors
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: postgres
-        BUILD_TYPE: Release
 
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+jobs:
 
-        - name: Install dependencies
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y \
-              build-essential \
-              cmake \
-              git \
-              libpqxx-dev \
-              libgtest-dev \
-              postgresql-client \
-              wget
+  build-and-test:
 
-        - name: Build and install Crow (from source)
-          run: |
-            git clone https://github.com/ipkn/crow.git
-            cd crow
-            mkdir build && cd build
-            cmake ..
-            make
-            sudo make install
+    runs-on: ubuntu-latest
 
-        - name: Configure CMake
-          run: |
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+    services:
 
-        - name: Build
-          run: |
-            cmake --build build --config ${{ env.BUILD_TYPE }} -- -j$(nproc)
+      postgres:
+        image: postgres:14
 
-        - name: Run unit tests
-          env:
-            POSTGRES_HOST: localhost
-            POSTGRES_PORT: 5432
-            POSTGRES_DB: sensors
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-          run: |
-            cd build
-            ctest --output-on-failure -R UnitTest
+        env:
+          POSTGRES_DB: sensors
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
 
-        - name: Run integration tests
-          env:
-            POSTGRES_HOST: localhost
-            POSTGRES_PORT: 5432
-            POSTGRES_DB: sensors
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-          run: |
-            cd build
-            ctest --output-on-failure -R IntegrationTest
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd="pg_isready -U postgres -d sensors"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: sensors
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+      BUILD_TYPE: Release
+
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            git \
+            libpqxx-dev \
+            libgtest-dev \
+            libboost-all-dev \
+            libasio-dev \
+            postgresql-client
+
+      - name: Build and install Crow
+        run: |
+          git clone https://github.com/CrowCpp/Crow.git crow
+
+          cmake \
+            -S crow \
+            -B crow/build \
+            -DCROW_BUILD_EXAMPLES=OFF \
+            -DCROW_BUILD_TESTS=OFF \
+            -DCROW_BUILD_DOCS=OFF
+
+          cmake \
+            --build crow/build \
+            --config Release \
+            --parallel
+
+          sudo cmake \
+            --install crow/build
+
+      - name: Create test database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql \
+            -h localhost \
+            -U postgres \
+            -d postgres \
+            -c "CREATE DATABASE sensors_test;"
+
+      - name: Initialize test database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql \
+            -h localhost \
+            -U postgres \
+            -d sensors_test \
+            -f database/schema.sql
+
+
+      - name: Configure CMake
+        run: |
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+
+      - name: Build
+        run: |
+          cmake \
+            --build build \
+            --config ${{ env.BUILD_TYPE }} \
+            --parallel
+
+
+      - name: Run unit tests
+        run: |
+          ctest \
+            --test-dir build \
+            --output-on-failure \
+            -L unit
+
+      - name: Run integration tests
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: sensors
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+
+        run: |
+          ctest \
+            --test-dir build \
+            --output-on-failure \
+            -L integration
